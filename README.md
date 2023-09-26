@@ -1,6 +1,7 @@
-# Data_Streaming_FlightAware_Project
-- Author : Pasquale Salomone
-- Date: September 26, 2023
+# Data Streaming FlightAware Project
+Author: Pasquale Salomone
+<br>
+Date: September 26, 2023
 
 ## Overview
 
