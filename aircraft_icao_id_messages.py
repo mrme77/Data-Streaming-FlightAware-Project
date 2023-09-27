@@ -22,6 +22,11 @@ csv_filename = 'aircraft_icao_id_messages.csv'
 # CSV headers
 csv_headers = ['type_msg', 'aircraft_icao_id', 'first_date', 'first_timestamp', 'company_id']
 
+# Create a set to store unique message keys (aircraft_icao_id + company_id)
+unique_message_keys = set()
+# Create a set to store unique company IDs
+unique_company_ids = set()
+
 def aircraft_icao_id_callback(ch, method, properties, body):
     """
     Callback function for handling aircraft ICAO ID messages received from RabbitMQ.
@@ -46,30 +51,46 @@ def aircraft_icao_id_callback(ch, method, properties, body):
         first_date = fields[2]
         first_timestamp = fields[3]
         company_id = fields[-1]  # Last element in the message
+        
+        # Create a unique message key based on aircraft_icao_id and company_id
+        message_key = f"{aircraft_icao_id}-{company_id}"
 
-        # Check if the CSV file exists, and create it with headers if not
-        csv_exists = False
-        try:
-            with open(csv_filename, 'r') as csv_file:
-                csv_exists = True
-        except FileNotFoundError:
-            pass
+        # Check if the message key is unique
+        if message_key not in unique_message_keys:
+            # Add the message key to the set of unique message keys
+            unique_message_keys.add(message_key)
 
-        with open(csv_filename, mode='a', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file)
+            # Check if the company ID is unique
+            if company_id not in unique_company_ids:
+                # Add the company ID to the set of unique company IDs
+                unique_company_ids.add(company_id)
 
-            # Write headers if the file is newly created
-            if not csv_exists:
-                csv_writer.writerow(csv_headers)
+                # Print the count of unique company IDs
+                print(f"Received ADSB data (company id) for aircraft ICAO ID: {aircraft_icao_id} / {company_id}")
 
-            csv_writer.writerow([type_msg, aircraft_icao_id, first_date, first_timestamp, company_id])
+                print(f"Count of Unique Company IDs: {len(unique_company_ids)}")
 
-        print(f"Received ADSB data (company id) for aircraft ICAO ID: {aircraft_icao_id} / {company_id}")
+            # Check if the CSV file exists, and create it with headers if not
+            csv_exists = False
+            try:
+                with open(csv_filename, 'r') as csv_file:
+                    csv_exists = True
+            except FileNotFoundError:
+                pass
 
+            with open(csv_filename, mode='a', newline='') as csv_file:
+                csv_writer = csv.writer(csv_file)
+
+                # Write headers if the file is newly created
+                if not csv_exists:
+                    csv_writer.writerow(csv_headers)
+
+                csv_writer.writerow([type_msg, aircraft_icao_id, first_date, first_timestamp, company_id])
+
+            #print(f"Received ADSB data (company id) for aircraft ICAO ID: {aircraft_icao_id} / {company_id}")
 
     except Exception as e:
         print(f"Error processing message: {str(e)}")
-
 def main():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_host, port=rabbit_port))
     channel = connection.channel()

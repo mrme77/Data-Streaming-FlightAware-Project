@@ -149,8 +149,8 @@ def extract_and_send_adsb_data(piaware_ip, piaware_port, rabbitmq_host):
         # Create a socket to connect to the PiAware device
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        # Set a timeout of 15 seconds for the socket
-        sock.settimeout(180.0)
+        # Set a timeout for the socket
+        sock.settimeout(360.0)
 
         # Connect to the PiAware device
         sock.connect((piaware_ip, piaware_port))
