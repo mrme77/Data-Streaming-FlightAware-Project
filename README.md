@@ -9,54 +9,55 @@ The Module7-FlightAwareProject is a streaming analytics project designed to proc
 
 ## Data Sources
 
-The project utilizes data from FlightAware, a leading provider of aviation data and flight tracking information. The original data sources include various flight-related information such as aircraft identifiers, timestamps, altitude, latitude, longitude, speed, heading, and more.
+The project utilizes live data from FlightAware, a leading provider of aviation data and flight tracking information. The original data sources include various flight-related information such as aircraft identifiers, timestamps, altitude, latitude, longitude, speed, heading, and transponder codes.
+
+## Resources
 
 - [FlightAware](https://www.flightaware.com/)
-
-## Process
+- [Automatic Dependent Surveillance - Broadcast (ADS-B)](https://www.faa.gov/about/office_org/headquarters_offices/avs/offices/afx/afs/afs400/afs410/ads-b)
+- [PiAware](https://blog.flightaware.com/piaware-7-release#:~:text=PiAware%207%20has%20several%20new,(SD%20Card%20Image%20only).)
+- [Transponder Codes](https://code7700.com/transponder.htm)
 
 ### Producers
 
-1. **flight_data_producer.py**: This producer script fetches flight data from FlightAware or a similar source and publishes it to RabbitMQ message brokers. It simulates the continuous generation of flight data for real-time processing.
+1. **flight_data_producer.py**: This producer script fetches live flight data from PiAware running on a Raspberry PI and publishes it to RabbitMQ message brokers. It simulates the continuous generation of flight data for real-time processing.
 
 ### Consumers
 
-1. **adsb_data_consumer.py**: This consumer script listens to the "adsb_data_queue" and processes Automatic Dependent Surveillance–Broadcast (ADS-B) data, including fields like aircraft ICAO ID, timestamp, altitude, latitude, longitude, speed, and heading. It stores this data in a CSV file.
+1. **adsb_data_consumer.py**: This consumer script listens to the "adsb_data_queue" and processes Automatic Dependent Surveillance–Broadcast (ADS-B) data, including fields like type_msg,aircraft_icao_id,first_date,first_timestamp,altitude,latitude,longitude. It stores this data in a CSV file.
 
-2. **nav_data_consumer.py**: This consumer script listens to the "nav_data_queue" and processes navigation-related data, including speed and heading. It also stores this data in a CSV file.
+2. **nav_data_consumer.py**: This consumer script listens to the "nav_data_queue" and processes navigation-related data, including type_msg,aircraft_icao_id,first_date,first_timestamp,speed,heading It also stores this data in a CSV file.
 
-3. **aircraft_icao_id_consumer.py**: This consumer script listens to the "aircraft_icao_id_queue" and processes aircraft ICAO ID data, including type messages and timestamps. It stores this data in a CSV file.
+3. **aircraft_icao_id_consumer.py**: This consumer script listens to the "aircraft_icao_id_queue" and processes aircraft ICAO ID data, including type_msg,aircraft_icao_id,first_date,first_timestamp,company_id. It also displays the count of unique ICAO Code (company_id), and it only stores unique messages data in a CSV file.
 
-4. **transponder_consumer.py**: This consumer script listens to the "transponder_queue" and processes transponder data, including type messages, aircraft ICAO ID, timestamps, and transponder values. It stores this data in a CSV file.
+4. **transponder_consumer.py**: This consumer script listens to the "transponder_queue" and processes transponder data, including type_msg,aircraft_icao_id,first_date,first_timestamp,transponder. If certain type of transponder codes are received (7600,7700,7500) it displays an alert on screen and sends an email to the end user. It stores this data in a CSV file.
 
 ## Output
 
 The output of this streaming analytics project includes several CSV files, each containing specific flight-related information:
 
-- **adsb_data_messages.csv**: Contains ADS-B data, including altitude, latitude, longitude, speed, and heading.
+- **adsb_data_messages.csv**
 
-- **nav_data_messages.csv**: Contains navigation data, including speed and heading.
+- **nav_data_messages.csv**
 
-- **aircraft_icao_id_messages.csv**: Contains aircraft ICAO ID data, including type messages and timestamps.
+- **aircraft_icao_id_messages.csv**
 
-- **transponder_messages.csv**: Contains transponder data, including type messages, aircraft ICAO ID, timestamps, and transponder values.
-
-## How to Run
-
-Readers don't need to download or execute Python code to verify the results. Instead, the project outputs are provided in CSV files for easy access and analysis.
-
-Screenshots of RabbitMQ queues, execution of consumer scripts in separate terminals, and sample data are included in this repository to illustrate the project's functionality.
-
-For a step-by-step guide on running the project and viewing the results, please refer to the documentation and screenshots provided in the repository.
+- **transponder_messages.csv**
 
 ## Screenshots
 
-![RabbitMQ Queue - adsb_data_queue](screenshots/rabbitmq_adsb_data_queue.png)
+Screenshots of RabbitMQ queues, execution of consumer scripts in separate terminals, and sample data are included in this repository to illustrate the project's functionality.
 
-![Terminal - Running adsb_data_consumer.py](screenshots/terminal_adsb_data_consumer.png)
+![RabbitMQ Queue](screenshots/rabbitmq_adsb_data_queue.png)
+
+![Running Multiple Terminals](screenshots/terminal_adsb_data_consumer.png)
+
+## Acknowledgments
+
+I would like to acknoledge Stackoverflow, ChatGPT, Google Bard as an instrumental aid in the development of this project.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
+
