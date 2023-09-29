@@ -39,6 +39,10 @@ def nav_data_callback(ch, method, properties, body):
     try:
         # Decode the message from bytes to a string
         body_str = body.decode('utf-8')
+        # Check if the message is a heartbeat message
+        if body_str == "Heartbeat Message":
+            # Ignore heartbeat messages
+            return
         fields = body_str.split(',')
 
         # Extract relevant information
@@ -72,7 +76,7 @@ def nav_data_callback(ch, method, properties, body):
         print(f"Error processing message: {str(e)}")
 
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_host, port=rabbit_port))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_host, port=rabbit_port,heartbeat=600))
     channel = connection.channel()
 
     channel.queue_declare(queue= queue_name, durable=True)

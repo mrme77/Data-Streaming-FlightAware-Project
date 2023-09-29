@@ -1,6 +1,6 @@
 '''
 Auhtor: Pasquale Salomone
-Date: Septmber 26, 2023
+Date: Septmber 29, 2023
 '''
 
 import socket
@@ -8,16 +8,18 @@ import pika
 import time
 import logging
 import configparser
+import threading
+from queue import Queue
 
 # Define the names of the queues
 my_queues = {1: 'transponder_queue',
-             2 : 'adsb_data_queue',
-             3 : 'aircraft_icao_id_queue',
-             4:  'nav_data'
-            }
+             2: 'adsb_data_queue',
+             3: 'aircraft_icao_id_queue',
+             4: 'nav_data'
+             }
 
-# Deine the msg_type
-MSG_TYPE_TRANSPONDER= 1
+# Define the msg_type
+MSG_TYPE_TRANSPONDER = 1
 MSG_TYPE_ADSB = 2
 MSG_TYPE_AIRCRAFT_ICAO_ID = 3
 MSG_NAV_DATA = 4
@@ -30,7 +32,6 @@ config.read('config.ini')
 piaware_ip = config['PiAware']['IP']
 piaware_port = int(config['PiAware']['Port'])
 rabbitmq_host = config['RabbitMQ']['Host']
-
 
 # Set up the logging
 logger = logging.getLogger(__name__)
@@ -113,44 +114,90 @@ def extract_info(text, typemsg):
 
     return results
 
+
+# Create a buffer queue to hold messages temporarily
+message_buffer = Queue(maxsize=100)  # Adjust the buffer size as needed
+# Define a lock to ensure thread-safe access to the buffer
+buffer_lock = threading.Lock()
+
+def publish_message_to_queue(channel, message_type, body_content):
+    """
+    Publishes a message to the specified RabbitMQ queue.
+
+    Args:
+        channel: A RabbitMQ channel object.
+        message_type (int): An integer indicating the message type.
+        body_content (str): The content of the message to be sent.
+
+    This function attempts to publish a message to a RabbitMQ queue, logs the message content,
+    and handles any AMQP connection errors.
+    """
+
+    try:
+        channel.basic_publish(exchange='', routing_key=my_queues[message_type], body=body_content)
+        logger.info(body_content)
+    except pika.exceptions.AMQPConnectionError as e:
+        logger.error(f"Error sending message to queue: {str(e)}")
+
+def process_buffered_messages(channel):
+    """
+    Processes messages from the buffer and publishes them to RabbitMQ.
+
+    Args:
+        channel: A RabbitMQ channel object.
+
+    This function processes messages from the message buffer and publishes them to the appropriate
+    RabbitMQ queue. It ensures that messages are sent in the correct order.
+    """
+    while not message_buffer.empty():
+        message = message_buffer.get()
+        message_type, body_content = message
+        publish_message_to_queue(channel, message_type, body_content)
+
+def send_heartbeat(channel, queue_name):
+    """
+    Sends heartbeat messages to RabbitMQ at regular intervals.
+
+    Args:
+        channel: A RabbitMQ channel object.
+        queue_name (str): The name of the RabbitMQ queue for heartbeat messages.
+
+    This function sends heartbeat messages to a specified RabbitMQ queue at regular intervals.
+    """
+    while True:
+        time.sleep(30)  # Send a heartbeat message every 30 seconds
+
+        # Create a heartbeat message (adjust the format as needed)
+        heartbeat_message = "Heartbeat Message"
+
+        try:
+            channel.basic_publish(exchange='', routing_key=queue_name, body=heartbeat_message)
+            logger.info("Sent heartbeat message")
+        except pika.exceptions.AMQPConnectionError as e:
+            logger.error(f"Error sending heartbeat message: {str(e)}")
+
+
+
 def extract_and_send_adsb_data(piaware_ip, piaware_port, rabbitmq_host):
     """
-    Extracts ADS-B data from a PiAware device, processes it, and sends it to RabbitMQ queues.
+    Connects to PiAware, retrieves aircraft data, and sends it to RabbitMQ queues.
 
     Args:
         piaware_ip (str): The IP address of the PiAware device.
-        piaware_port (int): The port number to connect to on the PiAware device.
+        piaware_port (int): The port number for the PiAware connection.
         rabbitmq_host (str): The hostname or IP address of the RabbitMQ server.
 
-    This function performs the following steps:
-    1. Creates a socket to connect to the PiAware device.
-    2. Sets a timeout of 180 seconds for the socket.
-    3. Connects to the PiAware device using the specified IP address and port.
-    4. Establishes a connection to the RabbitMQ server.
-    5. Declares four RabbitMQ queues for different message types.
-    6. Enters a loop to continuously receive data from the PiAware device.
-    7. Processes each line of received data:
-       - Extracts relevant information based on the message type.
-       - Publishes the extracted data to the appropriate RabbitMQ queue.
-       - Logs the extracted data and any errors.
-    8. Waits for 30 seconds before processing the next message.
-    9. Handles exceptions, such as connection errors or timeouts.
-    10. Closes the socket and RabbitMQ connection when finished.
-
-    Raises:
-        ConnectionRefusedError: If the connection to the PiAware device is refused.
-        Exception: If any other error occurs during execution.
-
-    This function is designed for extracting ADS-B data from a PiAware device, parsing it, and
-    forwarding it to RabbitMQ queues for further processing or analysis.
-
+    This function establishes connections to both PiAware and RabbitMQ, retrieves aircraft data
+    from PiAware, processes and sends it to the appropriate RabbitMQ queues, and manages
+    the sending of heartbeat messages.
     """
+    connection = None
     try:
         # Create a socket to connect to the PiAware device
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Set a timeout for the socket
-        sock.settimeout(360.0)
+        sock.settimeout(1500)
 
         # Connect to the PiAware device
         sock.connect((piaware_ip, piaware_port))
@@ -162,91 +209,80 @@ def extract_and_send_adsb_data(piaware_ip, piaware_port, rabbitmq_host):
         channel.queue_declare(queue=my_queues[1], durable=True)
         channel.queue_declare(queue=my_queues[2], durable=True)
         channel.queue_declare(queue=my_queues[3], durable=True)
-        channel.queue_declare(queue=my_queues[4],durable=True)
+        channel.queue_declare(queue=my_queues[4], durable=True)
+
+        # Start the heartbeat thread
+        heartbeat_thread = threading.Thread(target=send_heartbeat, args=(channel, my_queues[2]))
+        heartbeat_thread.daemon = True  # Allow the thread to exit when the main program exits
+        heartbeat_thread.start()
 
         while True:
             try:
                 data = sock.recv(4096)
-                
+
                 if not data:
                     logger.info("No data received.")
                     break
 
                 for line in data.decode('utf-8', 'ignore').strip().split('\n'):
-                    if line[0:5] == 'MSG,3' and len(line)==104:
+                    if line[0:5] == 'MSG,3' and len(line) == 104:
                         message_type = MSG_TYPE_ADSB
-                        body_content = ','.join(extract_info(line,line[0:5].replace(',', '')))
-                        
-                        
-                        try:
-                            channel.basic_publish(exchange='', 
-                                                  routing_key= my_queues[message_type], 
-                                                  body= body_content)
-                            logger.info(body_content)
-                        except pika.exceptions.AMQPConnectionError as e:
-                            logger.error(f"Error sending message to queue: {str(e)}")
-                        
+                        body_content = ','.join(extract_info(line, line[0:5].replace(',', '')))
+
+                        # Add messages to the buffer queue instead of directly sending them
+                        with buffer_lock:
+                            message_buffer.put((message_type, body_content))
 
                     if line[0:5] == "MSG,6" and len(line) >= 86:
-                        
                         message_type = MSG_TYPE_TRANSPONDER
-                        body_content = ','.join(extract_info(line,line[0:5].replace(',', '')))
-                        
-                        try:
-                            channel.basic_publish(exchange='',
-                                                  routing_key= my_queues[message_type],
-                                                  body=body_content)
-                            logger.info(body_content)
-                        except pika.exceptions.AMQPConnectionError as e:
-                            logger.error(f"Error sending message to queue: {str(e)}")
-                        #
+                        body_content = ','.join(extract_info(line, line[0:5].replace(',', '')))
+
+                        with buffer_lock:
+                            message_buffer.put((message_type, body_content))
 
                     if line[0:5] == "MSG,1" and len(line) >= 86:
-                         
-                         message_type = MSG_TYPE_AIRCRAFT_ICAO_ID
-                         body_content = ','.join(extract_info(line,line[0:5].replace(',', '')))
-                         
-                         try:
-                            channel.basic_publish(exchange='',
-                                                  routing_key= my_queues[message_type],
-                                                  body=body_content)
-                            logger.info(body_content) 
-                         except pika.exceptions.AMQPConnectionError as e:
-                               logger.error(f"Error sending message to queue: {str(e)}")
-                    
-                    if line[0:5] == "MSG,4" and len(line)>= 86:
-                         
-                         message_type = MSG_NAV_DATA
-                         body_content = ','.join(extract_info(line,line[0:5].replace(',', '')))
-                         
-                         try:
-                            channel.basic_publish(exchange='',
-                                                  routing_key= my_queues[message_type],
-                                                  body=body_content)
-                            logger.info(body_content) 
-                         except pika.exceptions.AMQPConnectionError as e:
-                               logger.error(f"Error sending message to queue: {str(e)}")
+                        message_type = MSG_TYPE_AIRCRAFT_ICAO_ID
+                        body_content = ','.join(extract_info(line, line[0:5].replace(',', '')))
 
-                    # Waiting 5 minutes before processing the next message.
-                time.sleep(10)
-                       
+                        with buffer_lock:
+                            message_buffer.put((message_type, body_content))
+
+                    if line[0:5] == "MSG,4" and len(line) >= 86:
+                        message_type = MSG_NAV_DATA
+                        body_content = ','.join(extract_info(line, line[0:5].replace(',', '')))
+
+                        with buffer_lock:
+                            message_buffer.put((message_type, body_content))
+
+                # Process buffered messages
+                process_buffered_messages(channel)
 
             except socket.timeout:
                 logger.info("No data received for 15 seconds. Closing the connection.")
                 break
-
-    except ConnectionRefusedError:
-        logger.error(f"Connection to {piaware_ip}:{piaware_port} refused. Make sure PiAware is running and the IP address is correct.")
+    
+    except ConnectionRefusedError as e:
+        logger.error(f"Connection to {piaware_ip}:{piaware_port} refused. Make sure PiAware is running and the IP address is correct: {str(e)}")
     except Exception as e:
         logger.error(f"Error: {str(e)}")
     finally:
-        # Close the socket and RabbitMQ connection when done
-        sock.close()
-        connection.close()
+        try:
+            if 'sock' in locals() and sock is not None:
+                sock.close()
+        except Exception as e:
+            logger.error(f"Error closing socket: {str(e)}")
+
+        try:
+            if connection is not None and connection.is_open:
+                connection.close()
+                connection = None  # Set connection to None to avoid further closing attempts
+        except Exception as e:
+            logger.error(f"Error closing RabbitMQ connection: {str(e)}")
     
+
 try:
     if __name__ == '__main__':
-    # Start extracting and sending filtered ADS-B data to the appropriate queues
+        # Start extracting and sending filtered ADS-B data to the appropriate queues
         extract_and_send_adsb_data(piaware_ip, piaware_port, rabbitmq_host)
 except KeyboardInterrupt:
     print("\nExiting peacefully...")

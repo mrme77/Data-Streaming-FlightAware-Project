@@ -34,6 +34,9 @@ transponder_deque = deque(maxlen=TRANSPODER_DEQUE_MAX_LENGTH)
 # CSV file configuration
 csv_filename = 'transponder_messages.csv'
 
+# Create a set to store unique message keys (aircraft ICAO ID and transponder code)
+unique_message_keys = set()
+
 # Email configuration
 smtp_server = 'smtp.gmail.com'
 smtp_port = smtp_port
@@ -84,20 +87,13 @@ def show_transponder_alert(timestamp, transponder):
     send_email_alert(f"Transponder Alert: {transponder} received", f"Timestamp: {timestamp}, Transponder: {transponder}")
 
 def transponder_callback(ch, method, properties, body):
-    """Processes a transponder message and triggers an alert if the transponder code is one of the alert codes.
-
-    Args:
-        ch: The Pika channel.
-        method: The Pika method.
-        properties: The Pika properties.
-        body: The Pika body.
-
-    Returns:
-        None.
-    """
     try:
         # Decode the message from bytes to a string
         body_str = body.decode('utf-8')
+        # Check if the message is a heartbeat message
+        if body_str == "Heartbeat Message":
+            # Ignore heartbeat messages
+            return
         fields = body_str.split(',')
 
         # Extract relevant information
@@ -107,46 +103,51 @@ def transponder_callback(ch, method, properties, body):
         first_timestamp = fields[3]
         transponder = fields[4]
 
-        # Add CSV headers
-        csv_headers = ['type_msg', 'aircraft_icao_id', 'first_date', 'first_timestamp', 'transponder']
+        # Create a unique message key using aircraft ICAO ID and transponder code
+        message_key = f"{aircraft_icao_id}-{transponder}"
 
+        # Check if this message key has already been processed
+        if message_key not in unique_message_keys:
+            unique_message_keys.add(message_key)  # Add the message key to the set of unique keys
 
-        # Add the transponder reading to the deque
-        transponder_deque.append(transponder)
+            # Add CSV headers
+            csv_headers = ['type_msg', 'aircraft_icao_id', 'first_date', 'first_timestamp', 'transponder']
 
-        print(f"Received data for aircraft ICAO ID: {aircraft_icao_id} /  {transponder}")
-        
+            # Add the transponder reading to the deque
+            transponder_deque.append(transponder)
 
-        # Write the message to the CSV file
-        csv_exists = False
-        try:
-            with open(csv_filename, 'r') as csv_file:
-                csv_exists = True
-        except FileNotFoundError:
-            pass
+            print(f"Received data for aircraft ICAO ID: {aircraft_icao_id} / {transponder}")
 
-        with open(csv_filename, mode='a', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file)
+            # Write the message to the CSV file
+            csv_exists = False
+            try:
+                with open(csv_filename, 'r') as csv_file:
+                    csv_exists = True
+            except FileNotFoundError:
+                pass
 
-            # Write headers if the file is newly created
-            if not csv_exists:
-                csv_writer.writerow(csv_headers)
+            with open(csv_filename, mode='a', newline='') as csv_file:
+                csv_writer = csv.writer(csv_file)
 
-            csv_writer.writerow([type_msg, aircraft_icao_id, first_date, first_timestamp, transponder])
+                # Write headers if the file is newly created
+                if not csv_exists:
+                    csv_writer.writerow(csv_headers)
 
-        print(f"Received transponder code: {transponder}")
+                csv_writer.writerow([type_msg, aircraft_icao_id, first_date, first_timestamp, transponder])
 
-        # Check if the transponder value is one of 7600, 7500, or 7700, and trigger the alert
-        if transponder in ['7600', '7500', '7700']:
-            current_time = time.strftime('%Y-%m-%d %H:%M:%S')
-            show_transponder_alert(current_time, transponder)
+            print(f"Received transponder code: {transponder}")
+
+            # Check if the transponder value is one of 7600, 7500, or 7700, and trigger the alert
+            # added 0621 for testing the alert
+            if transponder in ['7600', '7500', '7700','0621']:
+                current_time = time.strftime('%Y-%m-%d %H:%M:%S')
+                show_transponder_alert(current_time, transponder)
     except ValueError:
         print("Invalid transponder value in message body.")
     except Exception as e:
         print(f"Error processing message: {str(e)}")
-
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_host, port=rabbit_port))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_host, port=rabbit_port,heartbeat=600))
     channel = connection.channel()
 
     channel.queue_declare(queue=transponder_queue, durable=True)

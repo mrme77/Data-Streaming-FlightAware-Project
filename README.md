@@ -5,11 +5,11 @@ Date: September 26, 2023
 
 ## Overview
 
-The Module7-FlightAwareProject is a streaming analytics project designed to process and analyze flight data in real-time. This project aims to provide insights into flight-related information and demonstrate the use of message brokers and consumers to handle streaming data.
+The Module7-FlightAwareProject is a streaming analytics project designed to process and analyze flight data in real-time. This project aims to provide insights into flight-related information and demonstrate the use of message brokers and consumers to handle streaming data. Data generated in this project will then be explored using Python Pandas.
 
 ## Data Sources
 
-The project utilizes live data from FlightAware, a leading provider of aviation data and flight tracking information. The original data sources include various flight-related information such as aircraft identifiers, timestamps, altitude, latitude, longitude, speed, heading, and transponder codes.
+The project utilizes live data from FlightAware, a leading provider of aviation data and flight tracking information, through PiAware 7.2 running on a Raspberry PI. The original data sources include various flight-related information such as aircraft identifiers, timestamps, altitude, latitude, longitude, speed, heading, and transponder codes.
 
 ## Resources
 
@@ -30,7 +30,7 @@ The project utilizes live data from FlightAware, a leading provider of aviation 
 
 3. **aircraft_icao_id_consumer.py**: This consumer script listens to the "aircraft_icao_id_queue" and processes aircraft ICAO ID data, including type_msg,aircraft_icao_id,first_date,first_timestamp,company_id. It also displays the count of unique ICAO Code (company_id), and it only stores unique messages data in a CSV file.
 
-4. **transponder_consumer.py**: This consumer script listens to the "transponder_queue" and processes transponder data, including type_msg,aircraft_icao_id,first_date,first_timestamp,transponder. If certain type of transponder codes are received (7600,7700,7500) it displays an alert on screen and sends an email to the end user. It stores this data in a CSV file.
+4. **transponder_consumer.py**: This consumer script listens to the "transponder_queue" and processes transponder data, including type_msg,aircraft_icao_id,first_date,first_timestamp,transponder. If certain type of transponder codes are received (7600,7700,7500) it displays an alert on screen and sends an email to the end user. It only stores unique transponder data in a CSV file to avoid logging in the same transponder code and aircraft id multiple times.
 
 ## Output
 
@@ -48,16 +48,19 @@ The output of this streaming analytics project includes several CSV files, each 
 
 Screenshots of RabbitMQ queues, execution of consumer scripts in separate terminals, and sample data are included in this repository to illustrate the project's functionality.
 
-![RabbitMQ Queue](screenshots/rabbitmq_adsb_data_queue.png)
+![RabbitMQ Queue](rabbitmqfinal.jpg)
 
-![Running Multiple Terminals](screenshots/terminal_adsb_data_consumer.png)
+![Running Multiple Terminals](multipleterminals.jpg)
+
+![Transponder Alert](alert_transponder.jpg)
+![Email Alert](IMG_3915.jpg)
 
 ## Acknowledgments
 
-I would like to acknoledge Stackoverflow, ChatGPT, Google Bard as an instrumental aid in the development of this project.
+I would like to acknowledge Stackoverflow, ChatGPT, Google Bard as an instrumental aid in the development of this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 
