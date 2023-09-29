@@ -5,7 +5,7 @@ Date: September 26, 2023
 
 ## Overview
 
-The Module7-FlightAwareProject is a streaming analytics project designed to process and analyze flight data in real-time. This project aims to provide insights into flight-related information and demonstrate the use of message brokers and consumers to handle streaming data. Data generated in this project will then be explored in another Gitrepo using Python. 
+The Module7-FlightAwareProject is a streaming analytics project designed to process and analyze flight data in real-time. This project aims to provide insights into flight-related information and demonstrate the use of message brokers and consumers to handle streaming data. In specific, it also explores the concept of heartbeat message (message is sent periodically by the producer to the broker to indicate that it is still alive and functioning properly. This allows the broker to detect if the producer has failed and to take appropriate action, such as requeuing the messages that were being produced by the failed producer) and the concept of buffering (the process of temporarily storing messages in memory before they are sent to the broker).Data generated in this project will then be explored in another Gitrepo using Python. 
 
 ## Data Sources
 
@@ -20,16 +20,13 @@ The project utilizes live data from FlightAware, a leading provider of aviation 
 
 ### Producers
 
-1. **flight_data_producer.py**: This producer script fetches live flight data from PiAware running on a Raspberry PI and publishes it to RabbitMQ message brokers. It simulates the continuous generation of flight data for real-time processing.
+1. **flight_data_producer.py**: This producer script fetches live flight data from PiAware running on a Raspberry PI and publishes it to RabbitMQ message brokers. It creates a continuous generation of flight data for real-time processing.
 
 ### Consumers
 
-1. **adsb_data_consumer.py**: This consumer script listens to the "adsb_data_queue" and processes Automatic Dependent Surveillance–Broadcast (ADS-B) data, including fields like type_msg,aircraft_icao_id,first_date,first_timestamp,altitude,latitude,longitude. It stores this data in a CSV file.
-
+1. **adsb_data_consumer.py**: This consumer script listens to the "adsb_data_queue" and processes Automatic Dependent Surveillance–Broadcast (ADS-B) data, including fields like type_msg aircraft_icao_id,first_date,first_timestamp,altitude,latitude,longitude. It stores this data in a CSV file.
 2. **nav_data_consumer.py**: This consumer script listens to the "nav_data_queue" and processes navigation-related data, including type_msg,aircraft_icao_id,first_date,first_timestamp,speed,heading It also stores this data in a CSV file.
-
 3. **aircraft_icao_id_consumer.py**: This consumer script listens to the "aircraft_icao_id_queue" and processes aircraft ICAO ID data, including type_msg,aircraft_icao_id,first_date,first_timestamp,company_id. It also displays the count of unique ICAO Code (company_id), and it only stores unique messages data in a CSV file.
-
 4. **transponder_consumer.py**: This consumer script listens to the "transponder_queue" and processes transponder data, including type_msg,aircraft_icao_id,first_date,first_timestamp,transponder. If certain type of transponder codes are received (7600,7700,7500) it displays an alert on screen and sends an email to the end user. It only stores unique transponder data in a CSV file to avoid logging in the same transponder code and aircraft id multiple times.
 
 ## Output
