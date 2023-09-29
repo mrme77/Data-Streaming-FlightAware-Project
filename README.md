@@ -5,7 +5,7 @@ Date: September 26, 2023
 
 ## Overview
 
-The Module7-FlightAwareProject is a streaming analytics project designed to process and analyze flight data in real-time. This project aims to provide insights into flight-related information and demonstrate the use of message brokers and consumers to handle streaming data. Data generated in this project will then be explored using Python Pandas.
+The Module7-FlightAwareProject is a streaming analytics project designed to process and analyze flight data in real-time. This project aims to provide insights into flight-related information and demonstrate the use of message brokers and consumers to handle streaming data. Data generated in this project will then be explored in another Gitrepo using Python. 
 
 ## Data Sources
 
