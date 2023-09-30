@@ -156,13 +156,19 @@ def process_buffered_messages(channel):
     This function processes messages from the message buffer and publishes them to the appropriate
     RabbitMQ queue. It ensures that messages are sent in the correct order.
     """
+    print(f"Buffer Length: {message_buffer.qsize()}")  # Print the buffer length here
+    
+    if message_buffer.full():
+        print("Buffer is full. Emptying the buffer.")
+        empty_buffer()  # Call the function to empty the buffer
+
+
     while not message_buffer.empty():
         message = message_buffer.get()
         message_type, body_content = message
         publish_message_to_queue(channel, message_type, body_content)
 
-    # After processing all messages, you can empty the buffer
-    empty_buffer()  # Call the function to empty the buffer
+    
 
 
 
