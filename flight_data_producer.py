@@ -111,7 +111,7 @@ def extract_info(text, typemsg):
     else:
         # Handle unknown message types here if needed
         results = ['unknown']
-
+   
     return results
 
 
@@ -138,6 +138,8 @@ def publish_message_to_queue(channel, message_type, body_content):
         logger.info(body_content)
     except pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Error sending message to queue: {str(e)}")
+    
+    
 
 def process_buffered_messages(channel):
     """
@@ -261,10 +263,24 @@ def extract_and_send_adsb_data(piaware_ip, piaware_port, rabbitmq_host):
                 logger.info("No data received for 15 seconds. Closing the connection.")
                 break
     
+            except pika.exceptions.AMQPConnectionError as e:
+                for i in range(10):
+                    try:
+                        channel.basic_publish(exchange='', routing_key=my_queues, body=body_content)
+                        # Message sent successfully, no need to continue retrying
+                        break
+                    except pika.exceptions.AMQPConnectionError:
+                          logger.error("AMQP Connection Error: Retrying...")
+                          time.sleep(1)
+                else:
+                  # This part is executed if the loop completes without a successful send
+                 logger.error("AMQP Connection Error: Failed to send message after 10 retries")
+
+    
     except ConnectionRefusedError as e:
-        logger.error(f"Connection to {piaware_ip}:{piaware_port} refused. Make sure PiAware is running and the IP address is correct: {str(e)}")
+            logger.error(f"Connection to {piaware_ip}:{piaware_port} refused. Make sure PiAware is running and the IP address is correct: {str(e)}")
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
+             logger.error(f"Error: {str(e)}")
     finally:
         try:
             if 'sock' in locals() and sock is not None:
