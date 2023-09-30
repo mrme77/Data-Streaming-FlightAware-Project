@@ -54,11 +54,7 @@ Screenshots of RabbitMQ queues, execution of consumer scripts in separate termin
 
 ## Video
 
-<video controls width="500">
-  <source src="output1.mov
-" type="video/quicktime">
-  Your browser does not support the video tag.
-</video>
+[Video Flight Data Producer](output1.mov)
 
 
 ## Acknowledgments
