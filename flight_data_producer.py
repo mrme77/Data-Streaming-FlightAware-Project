@@ -2,7 +2,7 @@
 Auhtor: Pasquale Salomone
 Date: Septmber 29, 2023
 '''
-
+import queue
 import socket
 import pika
 import time
@@ -139,7 +139,12 @@ def publish_message_to_queue(channel, message_type, body_content):
     except pika.exceptions.AMQPConnectionError as e:
         logger.error(f"Error sending message to queue: {str(e)}")
     
-    
+def empty_buffer():
+    while not message_buffer.empty():
+        try:
+            message_buffer.get_nowait()
+        except queue.Empty:
+            break  
 
 def process_buffered_messages(channel):
     """
@@ -155,6 +160,11 @@ def process_buffered_messages(channel):
         message = message_buffer.get()
         message_type, body_content = message
         publish_message_to_queue(channel, message_type, body_content)
+
+    # After processing all messages, you can empty the buffer
+    empty_buffer()  # Call the function to empty the buffer
+
+
 
 def send_heartbeat(channel, queue_name):
     """
