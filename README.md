@@ -55,7 +55,8 @@ Screenshots of RabbitMQ queues, execution of consumer scripts in separate termin
 ## Video
 
 <video controls width="500">
-  <source src="https://github.com/mrme77/Data-Streaming-FlightAware-Project/blob/main/output1.mov" type="video/quicktime">
+  <source src="https://github.com/mrme77/Data-Streaming-FlightAware-Project/raw/main/output1.mov
+" type="video/quicktime">
   Your browser does not support the video tag.
 </video>
 
