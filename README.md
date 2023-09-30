@@ -52,6 +52,14 @@ Screenshots of RabbitMQ queues, execution of consumer scripts in separate termin
 ![Transponder Alert](alert_transponder.jpg)
 ![Email Alert](IMG_3915.jpg)
 
+## Video
+
+<video controls width="500">
+  <source src="https://github.com/mrme77/Data-Streaming-FlightAware-Project/blob/main/output1.mov" type="video/quicktime">
+  Your browser does not support the video tag.
+</video>
+
+
 ## Acknowledgments
 
 I would like to acknowledge Stackoverflow, ChatGPT, Google Bard as an instrumental aid in the development of this project.
