@@ -54,8 +54,7 @@ Screenshots of RabbitMQ queues, execution of consumer scripts in separate termin
 
 ## Video
 
-![My Video](https://drive.google.com/file/d/1_M6whdH8SREa0mt-FrY7T9Fh9E9ATcyw/preview)
-
+<video src="https://drive.google.com/file/d/1_M6whdH8SREa0mt-FrY7T9Fh9E9ATcyw/view" controls></video>
 
 
 
