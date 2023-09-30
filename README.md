@@ -53,10 +53,11 @@ Screenshots of RabbitMQ queues, execution of consumer scripts in separate termin
 ![Email Alert](IMG_3915.jpg)
 
 ## Video
-<video width="width_value" height="height_value" controls>
-    <source src="https://drive.google.com/file/d/1_M6whdH8SREa0mt-FrY7T9Fh9E9ATcyw/view?usp=sharing" type="video/mp4">
+<video width="320" height="240" controls>
+    <source src="https://drive.google.com/file/d/1_M6whdH8SREa0mt-FrY7T9Fh9E9ATcyw/view" type="video/mp4">
     Your browser does not support the video tag.
 </video>
+
 
 
 
