@@ -5,7 +5,7 @@ Date: September 26, 2023
 
 ## Overview
 
-The Module7-FlightAwareProject is a streaming analytics project designed to process and analyze flight data in real-time. This project aims to provide insights into flight-related information and demonstrate the use of message brokers and consumers to handle streaming data. In specific, it also explores the concept of heartbeat message (message is sent periodically by the producer to the broker to indicate that it is still alive and functioning properly. This allows the broker to detect if the producer has failed and to take appropriate action, such as requeuing the messages that were being produced by the failed producer) and the concept of buffering (the process of temporarily storing messages in memory before they are sent to the broker).Data generated in this project will then be explored in another Gitrepo using Python. 
+The FlightAwareProject is a streaming analytics project designed to process and analyze flight data in real-time. This project aims to provide insights into flight-related information and demonstrate the use of message brokers and consumers to handle streaming data. In specific, it also explores the concept of heartbeat message (message is sent periodically by the producer to the broker to indicate that it is still alive and functioning properly. This allows the broker to detect if the producer has failed and to take appropriate action, such as requeuing the messages that were being produced by the failed producer) and the concept of buffering (the process of temporarily storing messages in memory before they are sent to the broker).Data generated in this project will then be explored in another Gitrepo using Python. 
 
 ## Data Sources
 
