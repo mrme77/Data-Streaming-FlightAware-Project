@@ -47,9 +47,6 @@ Screenshots of RabbitMQ queues, execution of consumer scripts in separate termin
 
 ![RabbitMQ Queue](rabbitmqfinal.jpg)
 
-![Running Multiple Terminals](multipleterminals.jpg)
-
-![Transponder Alert](alert_transponder.jpg)
 ![Email Alert](IMG_3915.jpg)
 
 ## Video
