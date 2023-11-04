@@ -49,13 +49,6 @@ Screenshots of RabbitMQ queues, execution of consumer scripts in separate termin
 
 ![Email Alert](IMG_3915.jpg)
 
-## Video
-
-This is a video showing the program runnig with multiple terminals open.
-
-https://github.com/mrme77/Data-Streaming-FlightAware-Project/assets/137796364/191a1757-03e8-4167-90d0-20c44a1fd604
-
-
 
 
 ## Acknowledgments
